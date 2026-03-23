@@ -59,6 +59,7 @@ body {
 
 /* Header Styles */
 header {
+    position: sticky;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -66,7 +67,7 @@ header {
     border-bottom: 1px solid #d8d2d2;
     flex-wrap: wrap;
     text-align: center;
-     background-image: url("Background1.png");
+    background-image: url("Background1.png");
     background-blend-mode:darken;
     background-repeat: no-repeat;
     background-size: cover; 
