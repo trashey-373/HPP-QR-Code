@@ -63,7 +63,6 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
     border-bottom: 1px solid #d8d2d2;
     flex-wrap: wrap;
     text-align: center;
@@ -133,13 +132,13 @@ footer a:hover {
     header .logo:first-child {
         position: absolute;
         left: 15px;
-        height: 10%;
+        height: 90%;
         opacity: 0.;
     }
     header .logo:last-child {
         position: absolute;
         right: 20px;
-        height: 11%;
+        height: 90%;
     }
 
     /* Center company name */
