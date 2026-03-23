@@ -194,18 +194,6 @@ footer a:hover {
         padding: 10px;
     }
 
-     /* Position logos on left and right */
-    header .logo:first-child {
-        position: absolute;
-        left: 15px;
-        height: 90%;
-        opacity: 0.;
-    }
-    header .logo:last-child {
-        position: absolute;
-        right: 20px;
-        height: 90%;
-    }
 
     .category h3 {
         font-size: 1.6em;
