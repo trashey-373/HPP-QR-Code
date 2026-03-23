@@ -23,7 +23,7 @@ body {
 
 /* Category Layout */
 .category {
-    width: 100%; /* Full width for small screens */
+    width: 90%; /* Full width for small screens */
     margin-bottom: 20px;
     border-bottom: 2px solid #eee;
     padding-bottom: 15px;
