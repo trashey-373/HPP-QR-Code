@@ -169,6 +169,12 @@ footer a:hover {
         font-family: "Oswald", sans-serif;
     }
 
+    #taxes {
+    text-align: center;
+    color: #09ff00;
+    font-size: 15px  ;
+}
+
     /* Footer Margin */
     footer {
         margin-top: 20px;
