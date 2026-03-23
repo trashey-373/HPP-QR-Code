@@ -1,6 +1,6 @@
 /* General Styles */
 body {
-    background-color: #f3d6d6;
+    background-image: url("Background.png");
     margin: 0;
     padding: 20px;
     font-family: "Cormorant Garamond", serif;
@@ -14,10 +14,10 @@ body {
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(209, 206, 206, 0.1);
-    background-image: url(restaurant.jpeg);
+    background-image: url("Background.png");
     background-blend-mode:darken;
-    /* background-repeat: no-repeat;
-    background-size: cover;*/ 
+    background-repeat: no-repeat;
+    background-size: cover; 
     background-position: center; 
 }
 
