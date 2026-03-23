@@ -207,4 +207,11 @@ footer a:hover {
     .category {
         display: block;
     }
+
+   #taxes {
+    text-align: center;
+    color: #09ff00;
+    font-size: 15px  ;
+}
+
 }
