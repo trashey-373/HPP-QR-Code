@@ -1,253 +1,1006 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurant Menu</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="header.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HPP – Digital Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+  body{background:#0c0a08;color:#f0ead8;font-family:'Jost',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;padding-top:170px}
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-track{background:#141210}
+  ::-webkit-scrollbar-thumb{background:#a07830;border-radius:3px}
+
+  /* ── NOISE OVERLAY ── */
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events:none;z-index:0;opacity:.4;
+  }
+
+  /* ── HEADER ── */
+  .header{
+    position:fixed;top:0;left:0;right:0;z-index:101;
+    background:rgba(12,10,8,.96);
+    backdrop-filter:blur(20px) saturate(160%);
+    border-bottom:1px solid #2e2a24;
+    padding:14px 20px 12px;
+    overflow:hidden;
+    text-align: center;
+  }
+  .header::after{
+    content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    width:60%;height:1px;
+    background:linear-gradient(90deg,transparent,#c9a84c,transparent);
+  }
+  /* flex row: logo + text block side by side */
+  .header-inner{
+    display:flex;align-items:center;gap:14px;
+    max-width:680px;margin:0 auto;
+  }
+  .header-logo{
+    width:52px;height:52px;
+    object-fit:cover;
+    flex-shrink:0;
+    animation:logoFadeIn .8s ease forwards;
+    opacity:0;transform:scale(.9);
+  }
+  @keyframes logoFadeIn{to{opacity:1;transform:scale(1)}}
+  .header-text{flex:1;min-width:0}
+  .header-name{
+    font-family:'Cormorant Garamond',serif;font-size:clamp(0.7rem,4.5vw,0.8rem);
+    font-weight:900;letter-spacing:.04em;color:#e8c97e;
+    animation:fadeUp .7s .2s ease both;
+    text-shadow:0 0 40px rgba(221, 216, 204, 0.3);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .header-tagline{
+    font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;
+    color:#9e9080;margin-top:3px;
+    animation:fadeUp .7s .4s ease both;
+  }
+  
+  @keyframes expandW{to{transform:scaleX(1)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── STICKY NAV ── */
+  .nav-wrap{
+    position:fixed;top:80px;left:0;right:0;z-index:99;
+    background:rgba(12,10,8,.94);
+    backdrop-filter:blur(16px) saturate(150%);
+    border-bottom:1px solid #2e2a24;
+  }
+  .nav-tabs{
+    display:flex;overflow-x:auto;gap:0;
+    scrollbar-width:none;-ms-overflow-style:none;
+    padding:0 1px;
+  }
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{
+    position:relative;padding:9px 7px;
+    font-family:'Jost',sans-serif;font-size:.72rem;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;
+    color:#9e9080;white-space:nowrap;cursor:pointer;
+    border:none;background:none;transition:color .3s;
+    flex-shrink:0;
+  }
+  .nav-tab::after{
+    content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%) scaleX(0);
+    width:70%;height:2px;background:#c9a84c;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    border-radius:2px;
+  }
+  .nav-tab.active{color:#e8c97e}
+  .nav-tab.active::after,.nav-tab:hover::after{transform:translateX(-50%) scaleX(1)}
+  .nav-tab:hover{color:#e8e0d0}
+
+  /* dropdown arrow for sub-cats */
+  .nav-tab[data-has-sub]::before{
+    content:'▾';font-size:.6rem;margin-left:4px;vertical-align:1px;
+  }
+
+  /* ── DROPDOWN SUB-CATEGORY ── */
+  .sub-nav{
+    overflow:hidden;max-height:0;transition:max-height .4s cubic-bezier(.4,0,.2,1);
+    background:#1e1b17;border-top:1px solid #2e2a24;
+  }
+  .sub-nav.open{max-height:120px}
+  .sub-nav-inner{
+    display:flex;gap:0;overflow-x:auto;padding:8px 5px;
+    scrollbar-width:none;
+  }
+  .sub-nav-inner::-webkit-scrollbar{display:none}
+  .sub-chip{
+    padding:7px 14px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    background:#2a2620;color:#9e9080;border-radius:100px;
+    border:1px solid #2e2a24;cursor:pointer;white-space:nowrap;
+    transition:all .25s;flex-shrink:0;
+  }
+  .sub-chip.active,.sub-chip:hover{
+    background:#c9a84c;color:#0c0a08;border-color:#c9a84c;
+    font-weight:500;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content{padding:20px 16px 100px;position:relative;z-index:1}
+
+  /* ── SECTION HEADER ── */
+  .section-label{
+    display:flex;align-items:center;gap:12px;
+    margin:32px 0 18px;
+  }
+  .section-label:first-child{margin-top:0}
+  .section-title{
+    font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:500;
+    color:#e8c97e;letter-spacing:.04em;white-space:nowrap;
+  }
+  .section-line{
+    flex:1;height:1px;
+    background:linear-gradient(90deg,#a07830,transparent);
+  }
+  .section-badge{
+    font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;
+    color:#0c0a08;background:#c9a84c;padding:3px 9px;border-radius:100px;
+    font-weight:500;
+  }
+
+  /* ── ITEM CARDS ── */
+  .item-grid{display:flex;flex-direction:column;gap:2px}
+  .item-card{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;
+    background:#141210;
+    border:1px solid #2e2a24;border-radius:14px;
+    cursor:default;
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+    opacity:0;transform:translateY(10px);
+    animation:cardIn .4s ease forwards;
+    margin-bottom:2px;
+  }
+  @keyframes cardIn{to{opacity:1;transform:translateY(0)}}
+  .item-card:hover{
+    background:#1e1b17;border-color:#a07830;
+    transform:translateX(3px);
+    box-shadow:-3px 0 0 #c9a84c;
+  }
+  .item-info{flex:1;min-width:0}
+  .item-name{
+    font-size:.88rem;font-weight:400;color:#f5f0e8;
+    letter-spacing:.02em;line-height:1.3;
+  }
+  .item-desc{
+    font-size:.73rem;color:#9e9080;margin-top:3px;
+    line-height:1.4;
+  }
+  .item-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+  .tag{
+    font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:2px 7px;border-radius:100px;border:1px solid;font-weight:500;
+  }
+  .tag-veg{color:#7bc67e;border-color:rgba(123,198,126,.3);background:rgba(123,198,126,.08)}
+  .tag-gf{color:#c9a84c;border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.08)}
+  .tag-spicy{color:#e8805a;border-color:rgba(232,128,90,.3);background:rgba(232,128,90,.08)}
+  .tag-popular{color:#c09ed8;border-color:rgba(192,158,216,.3);background:rgba(192,158,216,.08)}
+  .item-price{
+    font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;
+    color:#c9a84c;margin-left:14px;white-space:nowrap;
+  }
+  .item-price span{font-size:.65rem;font-weight:300;color:#9e9080}
+
+  /* ── FEATURED / LARGE CARD ── */
+  .item-card.featured{
+    flex-direction:column;align-items:flex-start;
+    padding:16px 16px 14px;
+    background:linear-gradient(135deg,#1e1b17,#141210);
+    border-color:#a07830;
+  }
+  .item-card.featured .item-price{margin-left:0;margin-top:10px;font-size:1.15rem}
+  .featured-top{display:flex;justify-content:space-between;width:100%;align-items:flex-start}
+
+  /* ── GLUTEN FREE HIGHLIGHT ── */
+  .gf-banner{
+    background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.04));
+    border:1px solid rgba(201,168,76,.25);border-radius:14px;
+    padding:14px 16px;margin-bottom:20px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .gf-icon{font-size:1.6rem}
+  .gf-text h3{font-family:'Cormorant Garamond',serif;font-size:1rem;color:#e8c97e;font-weight:500}
+  .gf-text p{font-size:.72rem;color:#9e9080;margin-top:2px;line-height:1.4}
+
+  /* ── PRICE NOTE ── */
+  .price-note{
+    font-size:.68rem;
+    letter-spacing:.05em;text-align:center;
+    margin:16px 0 28px;padding:11px 16px;
+    border-radius:8px;line-height:1.7;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .price-note-incl{
+    border:1px solid rgba(201,168,76,.22);
+    background:rgba(201,168,76,.05);
+    color:#b89a54;
+  }
+  .price-note-incl::before{content:'✓';font-size:.78rem;color:#c9a84c;flex-shrink:0;}
+  .price-note-excl{
+    border:1px solid rgba(232,128,90,.2);
+    background:rgba(232,128,90,.04);
+    color:#9e9080;
+  }
+  .price-note-excl::before{content:'ⓘ';font-size:.78rem;color:#e8805a;flex-shrink:0;}
+  .category-note{margin-bottom:40px;}
+
+  /* ── EMPTY STATE ── */
+  .empty{text-align:center;padding:60px 20px;color:#9e9080}
+  .empty-icon{font-size:2.5rem;margin-bottom:12px;opacity:.4}
+  .empty p{font-size:.82rem;letter-spacing:.08em;text-transform:uppercase}
+
+  /* ── FOOTER ── */
+  .footer{
+    background:#141210;border-top:1px solid #2e2a24;
+    padding:32px 20px 40px;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .footer::before{
+    content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:40%;height:1px;background:linear-gradient(90deg,transparent,#c9a84c,transparent);
+  }
+  .footer-logo{
+    width:48px;height:48px;border-radius:50%;object-fit:cover;
+    border:1px solid #a07830;margin-bottom:10px;opacity:.7;
+  }
+  .footer-sections{display:flex;justify-content:center;gap:24px;margin-bottom:20px;flex-wrap:wrap}
+  .footer-section h4{
+    font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+    color:#c9a84c;margin-bottom:8px;font-weight:500;
+  }
+  .footer-section ul{list-style:none}
+  .footer-section li{
+    font-size:.72rem;color:#9e9080;margin-bottom:4px;
+    letter-spacing:.04em;
+  }
+  .footer-bottom{font-size:.65rem;color:#9e9080;letter-spacing:.1em;text-transform:uppercase;line-height:1.8}
+  .footer-bottom a{color:#a07830;text-decoration:none}
+
+  /* ── HIDDEN ── */
+  .section-group{transition:opacity .3s,transform .3s}
+  .section-group.hidden{display:none}
+  .category-group.hidden{display:none}
+
+  /* ── SCROLL TO TOP ── */
+  .scroll-top{
+    position:fixed;bottom:24px;right:20px;
+    width:42px;height:42px;border-radius:50%;
+    background:#c9a84c;border:none;cursor:pointer;
+    color:#0c0a08;font-size:1rem;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 20px rgba(201,168,76,.4);
+    opacity:0;transform:translateY(20px);pointer-events:none;
+    transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:200;
+  }
+  .scroll-top.visible{opacity:1;transform:translateY(0);pointer-events:all}
+  .scroll-top:hover{background:#e8c97e;transform:translateY(-2px)}
+
+  /* ── STAGGER DELAYS ── */
+  .item-card:nth-child(1){animation-delay:.05s}
+  .item-card:nth-child(2){animation-delay:.09s}
+  .item-card:nth-child(3){animation-delay:.13s}
+  .item-card:nth-child(4){animation-delay:.17s}
+  .item-card:nth-child(5){animation-delay:.21s}
+  .item-card:nth-child(6){animation-delay:.25s}
+  .item-card:nth-child(7){animation-delay:.29s}
+  .item-card:nth-child(8){animation-delay:.33s}
+  .item-card:nth-child(9){animation-delay:.37s}
+  .item-card:nth-child(10){animation-delay:.41s}
+
+  /* ── RESPONSIVE ── */
+  @media(min-width:420px){
+    .item-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .item-card.featured{grid-column:1/-1}
+  }
+  @media(min-width:680px){
+    .item-grid{grid-template-columns:repeat(3,1fr)}
+    .content{padding:24px 24px 100px;max-width:680px;margin:0 auto}
+    .item-card.featured{grid-column:1/-1}
+  }
+</style>
 </head>
 <body>
-   
-        <header>
-            <!-- Left Logo -->
-            <img src="Logo72ppi1.png" alt="Left Logo" class="logo">
-    
-            <!-- Company Name -->
-            <div class="company-name">
-                <h4>Bhutan Hotel and Restaurant</h4>
-                <h4>Hotel Phuntsho Pelri</h>
-            </div>
-    
-            <!-- Right Logo -->
-            <img src="167-profile_PNhj8F.png" alt="Right Logo" class="logo">
-        </header>
 
-     <div class="menu-container">
-        <!-- Menu Categories -->
-        <div class="category">
-         <h3>BREAKFAST MENU (Alacarte)</h3>
-            <div class="item">Fruit Juice ........................................ Nu. 50/-</div>
-            <div class="item">Eggs (Poached/Boiled/Scrambled).. Nu. 120/-</div>
-            <div class="item">Cheese Omelet (Plain or Masala) ... Nu. 120/-</div>
-            <div class="item">Toast, Butter Jam (4 pcs) ................. Nu. 75/-</div>
-            <div class="item">Hot Chocolate ................................ Nu. 150/-
-            </div>
-            <div class="item">Corn Flakes / Porridge with Milk .... Nu. 150/-</div>
-            <div class="item">Ham / Sausage .............................. Nu. 150/-</div>
-            <div class="item">French Toast (4 pcs) ...................... Nu. 150/-</div>
-            <div class="item">Puri (per pcs) ................................... Nu. 30/-</div>
-            <div class="item">Aloo Bhaji ...................................... Nu. 120/-</div>
-            <div class="item">Alu Dam ........................................ Nu. 120/-</div>
-          
-        </div>
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <img class="header-logo"
+      src="WhatsApp_Image_2026-01-31_at_7.15.53_PM-removebg-preview.png"
+      onerror="this.style.display='none'"
+      alt="HPP Logo">
+    <div class="header-text">
+      <div class="header-name">HOTEL PHUNTSHO PELRI</div>
+      <div class="header-tagline">A Taste of Bhutan &nbsp;·&nbsp; Thimphu</div>
+    </div>
+  
+    <img class="header-logo"
+      src="Logo72ppi1.png"
+      onerror="this.style.display='none'"
+      alt="HPP Logo">
+  </div>
+</header>
 
-        <div class="category">
-            <h3>CONTINANTAL MEAL</h3>
-            <div class="item">Assorted Sauteed Mushrooms ....... Nu. 200/-</div>
-            <div class="item">Grilled Vegetables .......................... Nu. 200/-</div>
-            <div class="item">Austrian Fried Chicken ................... Nu. 235/-</div>
-            <div class="item">Grilled Prawn with Sausage ............ Nu. 500/-</div>
-            <div class="item">Grilled Prawn with Sausage ............ Nu. 500/-</div>
-            <div class="item">Grilled Chicken in Mushrooms Jus . Nu. 350/-</div>
-            <div class="item">Beef Stronganoff ........................... Nu. 350/-</div>
-            <div class="item">Creamy Spinach Panne .................. Nu. 200/-</div>
-            <div class="item">Spaghetti Bolognaise ..................... Nu. 350/-</div>
-        </div>
+<!-- STICKY NAV -->
+<nav class="nav-wrap" id="mainNav">
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-filter="all" onclick="setFilter('all',this)">All</button>
+    <button class="nav-tab" data-filter="cafe" data-has-sub onclick="setFilter('cafe',this)">Café</button>
+    <button class="nav-tab" data-filter="restaurant" data-has-sub onclick="setFilter('restaurant',this)">Restaurant</button>
+    <button class="nav-tab" data-filter="glutenfree" onclick="setFilter('glutenfree',this)">Gluten‑Free</button>
+    <button class="nav-tab" data-filter="bar" data-has-sub onclick="setFilter('bar',this)">Bar</button>
+  </div>
+  <!-- Sub-nav dropdown -->
+  <div class="sub-nav" id="subNav">
+    <div class="sub-nav-inner" id="subNavInner"></div>
+  </div>
+</nav>
 
-        <div class="category">
-            <h3>CHINESE MEAL</h3>
-            <div class="item">Veg. Stir Fried ............................... Nu. 170/-</div>
-            <div class="item">Paneer Chilli .................................. Nu. 200/-</div>
-            <div class="item">Assorted Chilli Garlic Mushroom .. Nu. 200/-</div>
-            <div class="item">Pork with Fresh Chilli .................... Nu. 250/-</div>
-            <div class="item">Shredded Chicken with Veg........... Nu. 220/-</div>
-            <div class="item">Oyster Beef Broccoli ...................... Nu. 250/-</div>
-            <div class="item">Buta No Kakuni .............................. Nu. 250/-</div>
-            <div class="item">Chicken Pan fry Noodles ................ Nu. 200/-</div>
-            <div class="item">Veg. Hakka Noodles ....................... Nu. 200/-</div>
-            <div class="item">Veg. Chilli Garlic Noodles ............... Nu. 200/-</div>
-            <div class="item">Ginger Smoked Rice ....................... Nu. 150/-</div>
-            <div class="item">Prawn Fried Rice ............................ Nu. 250/-</div>
-        </div>
+<!-- MAIN CONTENT -->
+<main class="content" id="mainContent">
+  <!-- injected by JS -->
+</main>
 
-        <div class="category">
-            <h3>BHUTANESE CUISINE</h3>
-            <div class="item">Veg. Thukpa ................................... Nu. 150/-</div>
-            <div class="item">Non-Veg Thukpa (Chicken/Beef) ....... Nu. 250</div>
-            <div class="item">Kewa Datsi ..................................... Nu. 150/-</div>
-            <div class="item">Ema Datsi ...................................... Nu. 150/-</div>
-            <div class="item">Shamu Datsi .................................. Nu. 200/-</div>
-            <div class="item">Norsha Paa .................................... Nu. 225/-</div>
-            <div class="item">Chicken Paa ................................... Nu. 200/-</div>
-            <div class="item">Pork Paa ........................................ Nu. 250/-</div>
-            <div class="item">Red Rice ......................................... Nu. 110/-</div>
-            <div class="item">Basmati Rice .................................. Nu. 110/-</div>
-        </div>
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-bottom">
+     &copy; 2025 Hotel Phuntsho Pelri &nbsp;·&nbsp; Thimphu, Bhutan
+  </div>
+</footer>
 
-        <div class="category">
-            <h3>INDIAN SELECTION</h3>
-            <div class="item">Chicken Curry ................................ Nu. 200/-</div>
-            <div class="item">Chicken Butter Masala ................... Nu. 300/-</div>
-            <div class="item">Fish Curry ...................................... Nu. 250/-</div>
-            <div class="item">Mixed Veg. Curry ........................... Nu. 150/-</div>
-            <div class="item">Paneer Butter Masala .................... Nu. 200/-</div>
-            <div class="item">Egg Curry ....................................... Nu. 175/-</div>
-            <div class="item">Aloo Gobi ....................................... Nu. 150/-</div>
-            <div class="item">Dal Fry ........................................... Nu. 100/-</div>
-            <div class="item">Dal Tadka ....................................... Nu. 120/-</div>
-            <div class="item">Chapatti/Per Pcs .............................. Nu. 25/-</div>
-            <div class="item">Curd ............................................... Nu. 100/-</div>
-        </div>
+<!-- SCROLL TO TOP -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
-        <div class="category">
-            <h3>SOUP</h3>
-            <div class="item">Veg. Hot & Sour Soup ..................... Nu. 100/-</div>
-            <div class="item">Veg. Clear Soup ............................. Nu. 100/-</div>
-            <div class="item">Tomato Soup ................................. Nu. 100/-</div>
-            <div class="item">Cream of Chicken Soup ................. Nu. 125/-</div>
-            <div class="item">Chicken Hot & Sour Soup ............... Nu. 125/-</div>
-        </div>
+<script>
+/* ═══════════════════════════════════════════════════
+   MENU DATA
+═══════════════════════════════════════════════════ */
+const menuData = {
 
-        <div class="category">
-            <h3>SALAD</h3>
-            <div class="item">Simple Salad .................................. Nu. 100/-</div>
-            <div class="item">Garden Green Salad ....................... Nu. 100/-</div>
-            <div class="item">Hogay Salad ................................... Nu. 100/-</div>
-            <div class="item">Grilled Chicken Salad ..................... Nu. 200/-</div>
-        </div>
-    
-        <div class="category">
-            <h3>SNACKS</h3>
-            <div class="item">Roasted Cashunut ................................ Nu. 300/-</div>
-            <div class="item">Malala Papad ....................................... Nu. 150/-</div>
-            <div class="item">Peanut Masala .................................... Nu. 150/-</div>
-            <div class="item">Nachos ............................................... Nu. 200/-</div>
-            <div class="item">Crispy Corn ........................................ Nu. 150/-</div>
-            <div class="item">Dragon Potatoes ................................ Nu. 150/-</div>
-            <div class="item">Chilli Garlic Prawns ........................... Nu. 500/-</div>
-            <div class="item">Chicken Pakora ................................ Nu. 250/-</div>
-            <div class="item">Peri-Peri Chicken Finger .................. Nu. 250/-</div>
-            <div class="item">Chicken Wings ................................. Nu. 250/-</div>
-            <div class="item">Fish Finger ...................................... Nu. 300/-</div>
-            <div class="item">Amritshari Fish ............................... Nu. 300/-</div>
-        </div>
+  cafe: {
+    label: 'Café',
+    note: 'All café prices in Nu.',
+    subCategories: [
+      {
+        id:'hot-coffee', label:'Hot Coffee',
+        items:[
+          {name:'Espresso',price:'90'},
+          {name:'Double Espresso / Doppio',price:'120'},
+          {name:'Americano / Long Black',price:'120'},
+          {name:'Espresso Con-Panna',price:'120'},
+          {name:'Cappuccino',price:'132',tags:['popular']},
+          {name:'Café Latte',price:'132'},
+          {name:'Café Mocha',price:'132'},
+          {name:'Honey Latte / Café Miel',price:'132',tags:['popular']},
+          {name:'Hazelnut Latte',price:'144'},
+          {name:'Caramel Latte',price:'144'},
+          {name:'Flat White',price:'138'},
+          {name:'Café Macchiato',price:'96'},
+          {name:'Latte Macchiato',price:'96'},
+          {name:'Café Bombón',price:'144'},
+          {name:'Affogato',price:'180'},
+          {name:'Hot Chocolate',price:'144'},
+          {name:'Masala Chai Latte',price:'144'},
+          {name:'Milk Tea',price:'90'},
+          {name:'Black Tea',price:'90'},
+        ]
+      },
+      {
+        id:'cold-coffee', label:'Cold Coffee',
+        items:[
+          {name:'Iced Espresso / Café Shakerato',price:'132'},
+          {name:'Hazelnut Shakerato',price:'144'},
+          {name:'Iced Americano / Iced Long Black',price:'120'},
+          {name:'Iced Café Latte',price:'132'},
+          {name:'Iced Caramel Latte',price:'144'},
+          {name:'Iced Hazelnut Latte',price:'144'},
+          {name:'Iced Vanilla Latte',price:'144'},
+          {name:'Iced Strawberry Latte',price:'144'},
+          {name:'Iced Matcha Latte',price:'144'},
+          {name:'Blueberry Coffee Milk',price:'156'},
+          {name:'Oreo Coffee Milk',price:'156'},
+          {name:'Iced Coffee',price:'156'},
+          {name:'Iced Chocolate',price:'156'},
+          {name:'Mocha Frappe',price:'156'},
+          {name:'Café Frappe',price:'156'},
+          {name:'Japanese Coffee Jelly',price:'150'},
+        ]
+      },
+      {
+        id:'hot-infusion', label:'Hot Infusions & Tea',
+        items:[
+          {name:'Green Tea',price:'90',tags:['gf','veg']},
+          {name:'Dragon Well / Ginger Honey Lime Tea',price:'156',tags:['gf','veg']},
+          {name:'Spirit Temple Tea',price:'120',tags:['gf','veg']},
+          {name:'Lemon Honey',price:'108',tags:['gf','veg']},
+          {name:'Elachi Tea',price:'108',tags:['gf','veg']},
+          {name:'Finger Lemon Tea',price:'156',tags:['gf','veg']},
+          {name:'Ginger Lemon Tea',price:'156',tags:['gf','veg']},
+          {name:'Lemon Mint',price:'120',tags:['gf','veg']},
+        ]
+      },
+      {
+        id:'shakes', label:'Shakes & Smoothies',
+        items:[
+          {name:'Chocolate Shake',price:'144'},
+          {name:'Vanilla Shake',price:'144'},
+          {name:'Strawberry Shake',price:'144'},
+          {name:'Caramel Shake',price:'144'},
+          {name:'Banana Shake',price:'144'},
+          {name:'Banana Yoghurt & Honey Smoothie',price:'156',tags:['gf']},
+          {name:'Fresh Summer Smoothie',price:'168',tags:['gf']},
+        ]
+      },
+      {
+        id:'cold-beverages', label:'Cold Beverages',
+        items:[
+          {name:'Black Iced Tea',price:'90',tags:['veg']},
+          {name:'Iced Lime Tea',price:'90',tags:['veg']},
+          {name:'Iced Caramel Milk Tea',price:'132'},
+          {name:'Matcha Honey Lemon',price:'132',tags:['veg']},
+          {name:'Blueberry Green Tea',price:'156',tags:['veg']},
+          {name:'Strawberry Purple Soda',price:'156',tags:['veg']},
+          {name:'Blue Green Soda',price:'156',tags:['veg']},
+          {name:'Fresh Lime Soda',price:'132',tags:['veg','gf']},
+          {name:'Fresh Orange Juice',price:'168',tags:['veg','gf']},
+          {name:'Fresh Watermelon Juice',price:'156',tags:['veg','gf']},
+          {name:'Mineral Water 500ml',price:'22',tags:['veg','gf']},
+          {name:'Coke / Pepsi (Can)',price:'120'},
+          {name:'Sprite (Can)',price:'120'},
+          {name:'Fanta (Can)',price:'120'},
+          {name:'Soda Water (Can)',price:'120'},
+          {name:'Tonic Water',price:'180'},
+          {name:'Pineapple Juice (Can)',price:'120'},
+          {name:'Apple Juice (Can)',price:'120'},
+          {name:'Orange Juice (Can)',price:'120'},
+          {name:'Mango Juice (Can)',price:'120'},
+        ]
+      },
+      {
+        id:'bakery', label:'Bakery & Snacks',
+        items:[
+          {name:'Plain Croissant',price:'72',tags:['veg']},
+          {name:'Chocolate Croissant',price:'84',tags:['veg']},
+          {name:'Cinnamon Roll',price:'90',tags:['veg']},
+          {name:'Fruit Danish',price:'90',tags:['veg']},
+          {name:'Chocolate Danish',price:'90',tags:['veg']},
+          {name:'Banana Bread',price:'54',tags:['veg']},
+          {name:'Brownie',price:'90',tags:['veg']},
+          {name:'Marble Cake',price:'60',tags:['veg']},
+          {name:'Apple Pie',price:'108',tags:['veg']},
+          {name:'Chocolate Cake',price:'108',tags:['veg']},
+          {name:'Black Forest',price:'108',tags:['veg']},
+          {name:'Cheesecake',price:'144',tags:['veg']},
+          {name:'Butterscotch',price:'108',tags:['veg']},
+          {name:'Tiramisù',price:'180',tags:['veg']},
+          {name:'Fruit Tart',price:'96',tags:['veg']},
+          {name:'Pineapple Upside Down',price:'96',tags:['veg']},
+          {name:'Plain Doughnut',price:'48',tags:['veg']},
+          {name:'Chocolate Doughnut',price:'66',tags:['veg']},
+          {name:'Filled Doughnut',price:'84',tags:['veg']},
+          {name:'Mini Doughnuts',price:'150',tags:['veg']},
+          {name:'Oat Milk Cookies',price:'30',tags:['veg']},
+          {name:'Chocolate Cookies',price:'30',tags:['veg']},
+          {name:'Walnut Cookies',price:'30',tags:['veg']},
+          {name:'Coconut Cookies',price:'120',tags:['veg']},
+          {name:'Cheese Stick (Pkt)',price:'120',tags:['veg']},
+          {name:'Samosa',price:'60',tags:['veg']},
+          {name:'Chicken Patties',price:'96'},
+          {name:'Mushroom Patties',price:'84',tags:['veg']},
+          {name:'Chicken Kathi Roll',price:'180'},
+          {name:'Veg Kathi Roll',price:'144',tags:['veg']},
+          {name:'Non-Veg Burger',price:'150'},
+          {name:'Veg Burger',price:'120',tags:['veg']},
+          {name:'Butter Cake',price:'65',tags:['veg']},
+        ]
+      },
+    ]
+  },
 
-        <div class="category">
-            <h3 class="item">Beers</h3>
-            <div class="item">Druk 11000 ....................................... Nu.180/-</div>
-            <div class="item">Druk Lager ........................................ Nu.180/-</div>
-            <div class="item">Bhutanese Wheat Beer ..................... Nu.240/-</div>
-            <div class="item">Bhutanese Red Rice Beer .................. Nu.240/-</div>
-            <div class="item">Red Panda ....................................... Nu. 300/-</div>
-            <div class="item">Soju ................................................ Nu. 350/-</div>
-        </div>
+  restaurant: {
+    label: 'Restaurant',
+    note: 'All restaurant prices in Nu. Exclusive of 5% GST and 10% Service Charge.',
+    subCategories: [
+      {
+        id:'breakfast', label:'Breakfast',
+        items:[
+          {name:'Good Start Breakfast – Continental',price:'450',desc:'Oatmeal, granola or muesli, toast, freshly squeezed juice, coffee or tea',tags:['veg']},
+          {name:'Good Start Breakfast – Full',price:'450',desc:'Two eggs your way, hash browns, mushrooms, bacon/ham/chicken sausage, coffee & juice'},
+          {name:'Indian Breakfast',price:'450',desc:'Aloo parathas, yoghurt, lassi, juice, masala tea & coffee',tags:['veg']},
+          {name:'Eggs to Order',price:'150',desc:'Poached / Scrambled / Omelette / Fried',tags:['gf']},
+          {name:'Egg White Soufflé Omelette',price:'200',desc:'Wilted spinach & pine nuts, roasted tomato ragout',tags:['gf']},
+          {name:'Brioche French Toast',price:'175',desc:'Himalayan honey and Grand Marnier cream'},
+          {name:'Buttermilk Pancakes',price:'200',desc:'Banana, blueberry, or choco-chip, served with maple syrup',tags:['veg']},
+          {name:'Corn Flakes / Choco Flakes',price:'120',desc:'Served with hot or cold milk',tags:['veg']},
+          {name:'Parathas',price:'175',desc:'Potato, cauliflower, or cottage cheese, with curd & pickle',tags:['veg']},
+          {name:'Poori Bhaji',price:'200',desc:'Spiced potato curry, puffy fried bread',tags:['veg']},
+          {name:'Upma',price:'175',desc:'With sambar and coconut chutney',tags:['veg']},
+          {name:'Thukpa',price:'150',desc:'Comforting noodle soup – a local breakfast delicacy',tags:['veg']},
+        ]
+      },
+      {
+        id:'soups-salads', label:'Soups & Salads',
+        items:[
+          {name:'Greek Salad',price:'150',desc:'Tomatoes, cucumbers, olives and feta cheese',tags:['veg','gf']},
+          {name:'Classic Caesar Salad',price:'150',desc:'Crisp lettuce, Caesar dressing, croutons, Parmesan'},
+          {name:'Watermelon & Cottage Cheese Salad',price:'150',desc:'Honey lemon dressing',tags:['veg','gf']},
+          {name:'Coriander Smoked Chicken Salad',price:'150',desc:'Coriander-infused, delicately smoked chicken',tags:['gf']},
+          {name:'Goen Hogay',price:'150',desc:'Traditional Bhutanese cucumber salad with chilies, onions & local cheese',tags:['veg','gf','popular']},
+          {name:'Minestrone',price:'200',desc:'Hearty Italian vegetable soup with beans and herbs',tags:['veg']},
+          {name:'Wild Mushroom Soup',price:'200',desc:'Velvety wild mushrooms simmered with herbs and cream',tags:['veg']},
+          {name:'Lemon Coriander Soup',price:'200',desc:'Clear broth with fresh coriander and lemon',tags:['veg','gf']},
+          {name:'Hot & Sour Soup',price:'200',desc:'Vegetable or Chicken'},
+          {name:'Manchow Soup',price:'200',desc:'Vegetable or Chicken'},
+        ]
+      },
+      {
+        id:'appetizers', label:'Appetizers',
+        items:[
+          {name:'Nachos',price:'200',desc:'Tortilla chips with flavorful sauces, salsa & creamy dip',tags:['veg']},
+          {name:'Crispy Corn',price:'150',desc:'Sweet corn deep-fried, tossed with oriental spices',tags:['veg','gf']},
+          {name:'Dragon Potatoes',price:'150',desc:'Crispy potato strips in Indo-Chinese sweet-spicy-tangy sauce',tags:['veg']},
+          {name:'Chilli Garlic Prawns',price:'500',desc:'Juicy prawns sautéed with garlic and chilies',tags:['gf']},
+          {name:'Chicken Pakora',price:'250',desc:'Marinated chicken bites coated in light batter, fried crispy'},
+          {name:'Peri-Peri Chicken Finger',price:'250',desc:'Golden fried chicken strips with zesty peri-peri spices',tags:['popular']},
+          {name:'Chicken Wings',price:'250',desc:'Succulent wings coated in rich, flavorful glaze'},
+          {name:'Fish Finger',price:'250',desc:'Crispy fish fingers with tangy dipping sauce'},
+          {name:'Amritsari Fish',price:'250',desc:'Crispy fried fish in traditional Amritsari spices'},
+        ]
+      },
+      {
+        id:'bhutanese', label:'Bhutanese Cuisine',
+        items:[
+          {name:'Ema Datsi',price:'200',desc:'National dish of Bhutan – chilli and cheese',tags:['veg','popular','spicy']},
+          {name:'Datshi (Mushroom / Potato)',price:'200',desc:'Traditional Bhutanese cheese dish',tags:['veg']},
+          {name:'Seasonal Vegetable Paa',price:'200',desc:'Vegetables stir-fried with local chilli',tags:['veg','spicy']},
+          {name:'Momo (Pork/Beef/Veg/Cheese/Chicken)',price:'200/150',desc:'Steamed dumplings served with Ezzay',tags:['popular']},
+          {name:'Jasha Maroo',price:'300',desc:'Boneless chicken stew with local butter, ginger & garlic',tags:['spicy']},
+          {name:'Phaksha Bayzum',price:'350',desc:'Traditional Bhutanese pork stew slow-cooked with chilies',tags:['spicy']},
+          {name:'Norsha Paa',price:'350',desc:'Bhutanese beef stir-fried with chilies and aromatic spices',tags:['spicy']},
+          {name:'Phaksha Fin Soiegey',price:'350',desc:'Pork cooked with Bhutanese spices and rice noodles'},
+          {name:'Norsha Fin Soiegey',price:'350',desc:'Beef cooked with Bhutanese spices and rice noodles'},
+          {name:'Churm Karp – Steamed White Rice',price:'120',tags:['veg','gf']},
+          {name:'Churm Marp – Steamed Red Rice',price:'120',tags:['veg','gf']},
+        ]
+      },
+      {
+        id:'indian', label:'Indian Cuisine',
+        items:[
+          {name:'Chicken Butter Masala',price:'300',desc:'Chicken tikka in butter-enriched tomato gravy',tags:['popular']},
+          {name:'Kadai Chicken',price:'300',desc:'Spicy & flavored with freshly ground kadai masala',tags:['spicy']},
+          {name:'Chicken Tikka Makhhanwala',price:'300',desc:'Tandoori chicken tikka simmered in tomato, fenugreek & ginger curry'},
+          {name:'Fish Curry',price:'300',desc:'Traditional coconut and chilli curry',tags:['spicy']},
+          {name:'Egg Curry',price:'250',desc:'Eggs in aromatic gravy with traditional spices'},
+          {name:'Paneer App Ki Pasand',price:'250',desc:'Cottage cheese in your choice of gravy: Butter / Kadai / Malai / Palak',tags:['veg']},
+          {name:'Bhindi Masala',price:'200',desc:'Okra with whole and ground spices, onion & tomatoes',tags:['veg','gf']},
+          {name:'Gobi Dum Adraki',price:'200',desc:'Cauliflower florets tossed with fresh ginger and coriander',tags:['veg','gf']},
+          {name:'Mixed Vegetable Curry',price:'200',desc:'Garden vegetables in a rich, fragrant curry',tags:['veg','gf']},
+          {name:'Dakhni Meloni Tarkari',price:'200',desc:'Beans, cauliflower & carrots with freshly ground coriander',tags:['veg','gf']},
+          {name:'Aloo Jeera',price:'200',desc:'Potatoes cooked with cumin seeds and herbs',tags:['veg','gf']},
+          {name:'Signature Biryani (Meat / Veg)',price:'450/320',desc:'Aromatic basmati rice slow-cooked with fragrant spices',tags:['popular']},
+          {name:'Choice of Dal',price:'150',desc:'Yellow Dal / Dal Dhaba / Dal Lasooni',tags:['veg','gf']},
+          {name:'Indian Breads',price:'120',desc:'Naan / Tandoori / Tawa / Phulka',tags:['veg']},
+          {name:'Jeera Rice',price:'150',desc:'Aromatic basmati rice tempered with roasted cumin',tags:['veg','gf']},
+        ]
+      },
+      {
+        id:'asian', label:'Asian Flavours',
+        items:[
+          {name:'Kung Pao Chicken',price:'350',desc:'Boneless chicken, peanut & vegetables in chili soya sauce',tags:['spicy']},
+          {name:'Gaeng Keow Wan Gai',price:'350',desc:'Thai coconut curry with fragrant green curry paste & chicken',tags:['spicy']},
+          {name:'Kaeng Khiao Wan',price:'400',desc:'Thai green curry with vegetables',tags:['veg','spicy']},
+          {name:'Krapaw Moo',price:'400',desc:'Minced pork stir-fried with Thai basil, garlic & chilies',tags:['spicy']},
+          {name:'Wok Toss – Veg / Chicken / Fish',price:'300/375',desc:'Choice of chilli garlic, sweet & sour, or black bean sauce'},
+          {name:'Măng Tây Xào – Vietnamese Water Chestnut & Asparagus',price:'300',desc:'Vietnamese stir-fry',tags:['veg','gf']},
+          {name:'Fried Rice – Chicken / Egg / Veg',price:'250/200/150',tags:['popular']},
+          {name:'Noodles – Chicken / Hakka / Egg / Chilli Garlic',price:'250/200/150'},
+        ]
+      },
+      {
+        id:'continental', label:'Continental & World',
+        items:[
+          {name:'Pan Seared Bassa Fillet',price:'400',desc:'Courgette fettuccine, caper lemon, Beurre Blanc'},
+          {name:'Fish & Chips',price:'400',desc:'Golden crispy fish fillet, fries and tartar sauce',tags:['popular']},
+          {name:'Steamed Fish',price:'400',desc:'Fresh fish with lemon butter caper sauce',tags:['gf']},
+          {name:'Pork Stew',price:'450',desc:'Served with steamed rice'},
+          {name:'Beef Stew',price:'450',desc:'Served with steamed rice'},
+          {name:'Roasted Corn-Fed Chicken',price:'450',desc:'Lyonnaise potato, glazed baby carrots, rosemary mustard jus',tags:['gf']},
+          {name:'Slow Braised Chicken Steak',price:'400',desc:'Mushroom ragout, herbs and spices'},
+          {name:'Poached Chicken Breast with Lemon Sauce',price:'400',desc:'Gallic lemon peppercorns, fresh herbs, boiled veg',tags:['gf']},
+          {name:'Chicken Stroganoff',price:'400',desc:'Mushroom and chicken in creamy tangy sauce, steamed rice'},
+          {name:'Carbonara',price:'250',desc:'Bacon, egg yolk, cream & Parmesan'},
+          {name:'Bolognaise',price:'250',desc:'Classic Italian Bolognese with minced meat, tomatoes & herbs'},
+          {name:'Arrabiata',price:'200',desc:'Tomato, olive oil, chilli & garlic',tags:['veg']},
+          {name:'Alfredo',price:'200',desc:'Classic creamy Alfredo sauce',tags:['veg']},
+          {name:'Kolkata Kathi Roll – Chicken / Paneer',price:'250/200',desc:'Peppers & onion in Kasonde, rolled in thin bread'},
+          {name:'Chicken Grilled Sandwich',price:'250',desc:'Grilled chicken, mayo and cheese'},
+          {name:'Veg Sandwich',price:'200',desc:'Cucumber, tomato and cheese',tags:['veg']},
+          {name:'Bombay Sandwich',price:'200',desc:'Popular Mumbai street sandwich',tags:['veg']},
+          {name:'Veg Spring Roll',price:'200',desc:'Crunchy seasoned vegetables, fried, served with garlic sauce',tags:['veg']},
+        ]
+      },
+      {
+        id:'desserts', label:'Desserts',
+        items:[
+          {name:'Kheer',price:'300',desc:'Traditional Indian rice pudding with cardamom, finished with nuts',tags:['veg','gf']},
+          {name:'Rasgulla',price:'300',desc:'Chena dough dumplings in light sugar syrup',tags:['veg']},
+          {name:'Gulab Jamun',price:'300',desc:'Classic Indian sweet',tags:['veg','popular']},
+          {name:'Fruit Cocktail',price:'300',desc:'Seasonal fruits chilled in light cream',tags:['veg','gf']},
+          {name:'Fruit Custard',price:'300',desc:'Creamy custard mixed with fresh seasonal fruits',tags:['veg']},
+          {name:'Choice of Ice-Cream',price:'300',desc:'Vanilla / Butterscotch / Chocolate',tags:['veg','gf']},
+        ]
+      },
+    ]
+  },
 
-         <div class="category">
-            <h3 class="item">Rose' Wine</h3>
-            <div class="item">5- Vinas Rose ......................... Nu. 500/3000/-</div>
-        </div>
-         
+  glutenfree: {
+    label: 'Gluten-Free',
+    note: 'Items naturally free from gluten. Please inform staff of any allergies.',
+    subCategories: [
+      {
+        id:'gf-cafe', label:'Café',
+        items:[
+          {name:'Espresso',price:'90',tags:['gf','veg']},
+          {name:'Americano',price:'120',tags:['gf','veg']},
+          {name:'Fresh Orange Juice',price:'168',tags:['gf','veg']},
+          {name:'Fresh Watermelon Juice',price:'156',tags:['gf','veg']},
+          {name:'Fresh Lime Soda',price:'132',tags:['gf','veg']},
+          {name:'Banana Yoghurt & Honey Smoothie',price:'156',tags:['gf','veg']},
+          {name:'Fresh Summer Smoothie',price:'168',tags:['gf','veg']},
+          {name:'Green Tea',price:'90',tags:['gf','veg']},
+          {name:'Lemon Honey Tea',price:'108',tags:['gf','veg']},
+          {name:'Ginger Lemon Tea',price:'156',tags:['gf','veg']},
+        ]
+      },
+      {
+        id:'gf-restaurant', label:'Restaurant',
+        items:[
+          {name:'Eggs to Order',price:'150',tags:['gf'],desc:'Poached / Scrambled / Omelette / Fried'},
+          {name:'Egg White Soufflé Omelette',price:'200',tags:['gf'],desc:'Wilted spinach & pine nuts'},
+          {name:'Greek Salad',price:'150',tags:['gf','veg'],desc:'Tomatoes, cucumbers, olives and feta'},
+          {name:'Watermelon & Cottage Cheese Salad',price:'150',tags:['gf','veg']},
+          {name:'Goen Hogay',price:'150',tags:['gf','veg'],desc:'Traditional Bhutanese cucumber salad'},
+          {name:'Lemon Coriander Soup',price:'200',tags:['gf','veg']},
+          {name:'Crispy Corn',price:'150',tags:['gf','veg']},
+          {name:'Chilli Garlic Prawns',price:'500',tags:['gf']},
+          {name:'Ema Datsi',price:'200',tags:['gf','veg','spicy'],desc:'National dish – chilli and cheese'},
+          {name:'Datshi',price:'200',tags:['gf','veg']},
+          {name:'Churm Karp – Steamed White Rice',price:'120',tags:['gf','veg']},
+          {name:'Churm Marp – Steamed Red Rice',price:'120',tags:['gf','veg']},
+          {name:'Bhindi Masala',price:'200',tags:['gf','veg']},
+          {name:'Mixed Vegetable Curry',price:'200',tags:['gf','veg']},
+          {name:'Aloo Jeera',price:'200',tags:['gf','veg']},
+          {name:'Steamed Fish',price:'400',tags:['gf']},
+          {name:'Roasted Corn-Fed Chicken',price:'450',tags:['gf']},
+          {name:'Poached Chicken Breast with Lemon Sauce',price:'400',tags:['gf']},
+          {name:'Kheer',price:'300',tags:['gf','veg']},
+          {name:'Fruit Cocktail',price:'300',tags:['gf','veg']},
+          {name:'Choice of Ice-Cream',price:'300',tags:['gf','veg']},
+        ]
+      },
+      {
+        id:'gf-bar', label:'Bar',
+        items:[
+          {name:'Druk 11000 Beer',price:'180',tags:['gf']},
+          {name:'Red Panda Beer',price:'300',tags:['gf']},
+          {name:'Raven Vodka',price:'150',tags:['gf']},
+          {name:'Absolute Vodka',price:'360',tags:['gf']},
+          {name:'Zumzin Peach Wine',price:'300/900',tags:['gf']},
+          {name:'Virgin Mojito',price:'360',tags:['gf','veg']},
+        ]
+      },
+    ]
+  },
 
-        <div class="category">
-            <h3>International Whiskies</h3>
-            <div class="item">Chivas Regal 12Years...................... Nu. 600/-</div>
-            <div class="item">Johnnie Walker Black Label ............. Nu. 550/-</div>
-            <div class="item">Johnnie Walker Double black ........... Nu. 700/- </div>
-            <div class="item">Johnnie Walker Red Label ............... Nu. 400/-</div>
-            <div class="item">Johnnie Walker Gold Label .............. Nu. 800/-</div>
-            <div class="item">Johnnie Walker Blue Label ............ Nu. 1500/- </div>
-            <div class="item">Vat 69 ............................................ Nu. 450/-</div>
-            <div class="item">White Horse ................................... Nu. 450/- </div>
-            <div class="item">Jack Daniel's ................................. Nu. 500/-</div>
-           </div>
-    
-        <div class="category">
-            <h3>Soft Beverages</h3>
-            <div class="item">Aerated Water ............................... Nu. 120/-</div>
-            <div class="item">Preserved Juices ......................... Nu. 120/-</div>
-            <div class="item">Package Drinking Water ............ Nu. 30/50/-</div>
-        </div>
+  bar: {
+    label: 'Bar',
+    note: 'All bar prices in Nu. Inclusive of 5% GST and 10% Service Charge.',
+    subCategories: [
+      {
+        id:'beers', label:'Beers',
+        items:[
+          {name:'Druk 11000',price:'180',tags:['popular']},
+          {name:'Druk Lager',price:'180'},
+          {name:'Bhutanese Red Rice Beer',price:'240',tags:['popular']},
+          {name:'Bhutanese Wheat Beer',price:'240'},
+          {name:'Red Panda',price:'300'},
+          {name:'Soju',price:'350'},
+        ]
+      },
+      {
+        id:'wines', label:'Wines',
+        items:[
+          {name:'Zumzin Peach Wine',price:'300 / 900',desc:'Glass / Bottle – White'},
+          {name:'5-Vinas',price:'600 / 3500',desc:'Glass / Bottle – White'},
+          {name:'B&G Graves Blanc',price:'600 / 3500',desc:'Glass / Bottle – White'},
+          {name:'5-Vinas',price:'500 / 3000',desc:'Glass / Bottle – Red'},
+          {name:'Jacobs Creek – Shiraz Cabernet',price:'500 / 3000',desc:'Glass / Bottle – Red'},
+          {name:'Jacobs Creek – Merlot',price:'500 / 3000',desc:'Glass / Bottle – Red'},
+          {name:'Vintria Dry Shiraz',price:'360 / 1100',desc:'Glass / Bottle – Red'},
+          {name:'Raven Cabernet Sauvignon',price:'360 / 1100',desc:'Glass / Bottle – Red'},
+          {name:'5-Vinas Rosé',price:'500 / 3000',desc:'Glass / Bottle – Rosé'},
+        ]
+      },
+      {
+        id:'intl-whisky', label:'International Whiskies',
+        items:[
+          {name:'Johnnie Walker Blue Label',price:'1500',tags:['popular']},
+          {name:'Chivas Regal 12 Years',price:'600'},
+          {name:'Johnnie Walker Gold Label',price:'800'},
+          {name:'Johnnie Walker Double Black',price:'700'},
+          {name:'Johnnie Walker Black Label',price:'550'},
+          {name:'Johnnie Walker Red Label',price:'400'},
+          {name:"Jack Daniel's",price:'500'},
+          {name:'White Horse',price:'450'},
+          {name:'Vat 69',price:'450'},
+        ]
+      },
+      {
+        id:'dom-whisky', label:'Domestic Whiskey',
+        items:[
+          {name:'1907',price:'3600'},
+          {name:'Ter Whisky 18 Years',price:'700'},
+          {name:'K-5 Blended Whisky',price:'300'},
+          {name:'Misty Peak',price:'300'},
+          {name:'Special Courier',price:'150'},
+          {name:'Bhutan Highland',price:'150'},
+          {name:'CSJ Whiskey',price:'400'},
+          {name:'Castle Pride',price:'150'},
+          {name:'Royal Supreme',price:'600'},
+        ]
+      },
+      {
+        id:'cognac', label:'Cognac',
+        items:[
+          {name:'Martell XO',price:'1600',tags:['popular']},
+          {name:'Martell VSOP',price:'1000'},
+          {name:'Hennessey VS',price:'1000'},
+        ]
+      },
+      {
+        id:'spirits', label:'White Spirits & Liqueurs',
+        items:[
+          {name:'Absolut Vodka',price:'360'},
+          {name:'Smirnoff Red',price:'360'},
+          {name:'Raven Vodka',price:'150'},
+          {name:'Bacardi Carta Blanca',price:'400'},
+          {name:'Captain Morgan Spiced Gold',price:'300'},
+          {name:'Old Monk',price:'250'},
+          {name:'Bombay Sapphire Gin',price:'450'},
+          {name:"Gordon's Gin",price:'400'},
+          {name:'Camino Real Gold Tequila',price:'400'},
+          {name:'Baileys Irish Cream',price:'400'},
+          {name:'Cointreau Orange Liqueur',price:'400'},
+          {name:'Kahlúa',price:'400'},
+          {name:'Archers Peach Schnapps',price:'300'},
+          {name:'Campari',price:'360'},
+          {name:'Martini Rosso',price:'360'},
+          {name:'Martini Extra Dry',price:'360'},
+          {name:'Drambuie',price:'360'},
+        ]
+      },
+      {
+        id:'mocktails', label:'Mocktails',
+        items:[
+          {name:'Virgin Mojito',price:'360',desc:'Mint sprigs, lime, simple syrup and sparkling water',tags:['veg','popular']},
+          {name:'Blue Lagoon',price:'360',desc:'Blue Curaçao, lemonade',tags:['veg']},
+          {name:'Passionate Sunshine',price:'360',desc:'Pineapple, passion fruit, lime and simple syrup',tags:['veg']},
+          {name:'Aerated Water',price:'120',desc:'Coke, Diet Coke, Sprite, Soda, Tonic Water',tags:['veg']},
+          {name:'Preserved Juices',price:'120',tags:['veg']},
+          {name:'Mineral Water',price:'30/50',tags:['veg']},
+        ]
+      },
+      {
+        id:'bar-snacks', label:'Bar Snacks',
+        note:'Exclusive of 5% GST and 10% Service Charge',
+        items:[
+          {name:'Roasted Cashew Nuts',price:'300',desc:'Golden roasted, lightly seasoned'},
+          {name:'Masala Papad',price:'150',desc:'Crunchy papad with onions, tomatoes & Indian spices',tags:['veg']},
+          {name:'Peanut Masala',price:'150',desc:'Roasted peanuts with tomatoes, coriander & zesty masala',tags:['veg']},
+          {name:'Nachos',price:'200',desc:'Tortilla chips with salsa & creamy dip',tags:['veg']},
+          {name:'Crispy Corn',price:'150',desc:'Sweet corn with oriental spices',tags:['veg']},
+          {name:'Dragon Potatoes',price:'150',desc:'Crispy potato strips in Indo-Chinese sauce',tags:['veg']},
+          {name:'Chilli Garlic Prawns',price:'500',desc:'Prawns sautéed with garlic and chilies'},
+          {name:'Chicken Pakora',price:'250',desc:'Crispy battered chicken bites'},
+          {name:'Peri-Peri Chicken Finger',price:'250',desc:'Golden fried chicken strips with peri-peri spices'},
+          {name:'Chicken Wings',price:'250',desc:'Succulent wings in rich glaze'},
+          {name:'Fish Finger',price:'300',desc:'Crispy fish fingers with tangy sauce'},
+          {name:'Amritsari Fish',price:'300',desc:'Crispy fish in traditional Amritsari spices'},
+        ]
+      },
+    ]
+  }
+};
 
-        <div class="category">
-            <h3>White Spirits</h3>
-            <div class="item">Absolute ..................................... Nu. 360/-</div>
-            <div class="item">Smiiroff Red ............................... Nu. 360/-</div>
-            <div class="item">Raven Vodka .............................. Nu. 150/-</div>
-            <div class="item">Bacardi Carta Blanca .................. Nu. 400/-</div>
-            <div class="item">Captian Morgan Spiced Gold ...... Nu. 300/-</div>
-            <div class="item">Old Monk ................................... Nu. 250/-</div>
-            <div class="item">Bombay Sapphire....................... Nu. 450/-</div>
-            <div class="item">Gordon's Gin .............................. Nu. 400/-</div>
-            <div class="item">Camino Real Gold ..................... Nu. 400/-</div>
-        </div>
-            
-        <div class="category">
-            <h3>White Wine</h3>
-            <div class="item">Zumzin Peach Wine(Per GLass) .. Nu. 300/900/-</div>
-            <div class="item">5- Vinas ................................... Nu. 600/3500/-</div>
-            <div class="item">B&G Graves Blanc ..........................  Nu. 2500/-</div>
-        </div>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let currentFilter = 'all';
+let currentSub = null;
 
-        <div class="category">
-            <h3>Red Wine</h3>
-            <div class="item">Jacobs Creek-Shiraz Cabernet .. Nu. 500/2500/-</div>
-            <div class="item">Jacobs Creek-Merlot ................ Nu. 500/2500/-</div>
-            <div class="item">5- Vinas .................................. Nu. 500/3000/-</div>
-            <div class="item">Vintria Dry Shiraz ....................  Nu. 360/1100/-</div>
-            <div class="item">Raven Cabernet Sauvignon .....  Nu. 360/1100/-</div>
-       </div>
-         
-        <div class="category">
-            <h3>Domestic Whiskey</h3>
-            <div class="item">1907 ............................................ Nu. 3600/-</div>
-            <div class="item">Ter Whiskey 18Years ....................  Nu. 700/-</div>
-            <div class="item">K-5 Blended Whiskey ...................  Nu. 300/-</div>
-            <div class="item">Misty Peak ...................................  Nu. 300/-</div>
-            <div class="item">Special Courier ............................  Nu. 150/-</div>
-            <div class="item">Bhutan Highland ..........................  Nu. 150/-</div>
-            <div class="item">CSJ Whiskey ............................... Nu. 400/-</div>
-            <div class="item">Castle Pride ................................  Nu. 150/-</div>
-            <div class="item">Royal Supreme ............................  Nu. 600/-</div>
-        </div>
+const subCategories = {
+  cafe: [
+    {id:'hot-coffee',label:'Hot Coffee'},
+    {id:'cold-coffee',label:'Cold Coffee'},
+    {id:'hot-infusion',label:'Infusions'},
+    {id:'shakes',label:'Shakes'},
+    {id:'cold-beverages',label:'Cold Drinks'},
+    {id:'bakery',label:'Bakery'},
+  ],
+  restaurant: [
+    {id:'breakfast',label:'Breakfast'},
+    {id:'soups-salads',label:'Soups & Salads'},
+    {id:'appetizers',label:'Appetizers'},
+    {id:'bhutanese',label:'Bhutanese'},
+    {id:'indian',label:'Indian'},
+    {id:'asian',label:'Asian'},
+    {id:'continental',label:'Continental'},
+    {id:'desserts',label:'Desserts'},
+  ],
+  bar: [
+    {id:'beers',label:'Beers'},
+    {id:'wines',label:'Wines'},
+    {id:'intl-whisky',label:'Int\'l Whisky'},
+    {id:'dom-whisky',label:'Dom. Whisky'},
+    {id:'cognac',label:'Cognac'},
+    {id:'spirits',label:'Spirits'},
+    {id:'mocktails',label:'Mocktails'},
+    {id:'bar-snacks',label:'Bar Snacks'},
+  ]
+};
 
-        <div class="category">
-            <h3>Cognac</h3>
-            <div class="item">Martel XO ................................... Nu. 1600/-</div>
-            <div class="item">Matel VSOP ............................... Nu. 1000/-</div>
-            <div class="item">Hennessey VS ...........................  Nu. 1000/-</div>
-        </div>
+/* ═══════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════ */
+function tagHTML(tags){
+  if(!tags||!tags.length) return '';
+  const map={veg:'🟢 Veg',gf:'Gluten-Free',spicy:'🌶 Spicy',popular:'⭐ Popular'};
+  const cls={veg:'tag-veg',gf:'tag-gf',spicy:'tag-spicy',popular:'tag-popular'};
+  return `<div class="item-tags">${tags.map(t=>`<span class="tag ${cls[t]||''}">${map[t]||t}</span>`).join('')}</div>`;
+}
 
-        <div class="category">
-            <h3>Liqueur</h3>
-            <div class="item">Baileys Irish Cream Liqueur .......... Nu. 400/-</div>
-            <div class="item">Cointreau Liqueur ........................ Nu. 400/-</div>
-            <div class="item">Kahlua ........................................ Nu. 400/-</div>
-            <div class="item">Archers Peach Schnnap ..............  Nu. 300/-</div>
-            <div class="item">Campari ......................................  Nu. 360/-</div>
-            <div class="item">Martini Rosso .............................  Nu. 360/-</div>
-            <div class="item">Martini Extra Dry ........................  Nu. 360/-</div>
-            <div class="item">Drambuie ...................................  Nu. 360/-</div>
-        </div>
+function itemCardHTML(item, delay=0){
+  const hasTags = item.tags&&item.tags.length;
+  return `
+  <div class="item-card" style="animation-delay:${delay}s">
+    <div class="item-info">
+      <div class="item-name">${item.name}</div>
+      ${item.desc?`<div class="item-desc">${item.desc}</div>`:''}
+      ${hasTags?tagHTML(item.tags):''}
+    </div>
+    <div class="item-price">Nu.&nbsp;${item.price}<span> /item</span></div>
+  </div>`;
+}
 
-         <div class="category">
-            <h3>Mocktails</h3>
-            <div class="item">Virgin Mojito ................................ Nu. 360/-</div>
-            <div class="item">Blue Lagoon ................................ Nu. 360/-</div>
-            <div class="item">Passionate Sunshine .................. Nu. 360/-</div>
-        </div>
+function sectionHTML(subCat, filterKey, delay=0){
+  let html = `<div class="section-group" data-cat="${filterKey}" data-sub="${subCat.id}">
+    <div class="section-label">
+      <span class="section-title">${subCat.label}</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="item-grid">`;
+  subCat.items.forEach((item,i)=>{
+    html += itemCardHTML(item, (delay + i*0.03).toFixed(2));
+  });
+  html += `</div>`;
+  html += `</div>`;
+  return html;
+}
 
-      </div>
-        <div id="taxes"><h5>The above rates are EXCLUSIVE of 5% GST and 10% Service Charge.</h5></div>
-         <!-- Footer Section -->
-         <footer>
-            <p><strong>Hotel Phuntsho Pelri </strong><br>P.O Box# 159, Phandey Lam <br>  Hongkong Market, Thimphu, Bhutan <br> Phone: +975-2-334970/334071/334972
-                 <br> Mobile: +975-77825282 <br><a href="https://www.bhutanhotels.com.bt">www.bhutanhotels.com.bt</a><br> Email: <a href="mailto:hotelpp1@gmail.com">hotepp1@gmail.com</a></p>
-            <p>&copy; 2025 Hotel Phuntsho Pelri. All rights reserved.</p>
-        </footer> 
+function renderAll(){
+  const content = document.getElementById('mainContent');
+  let html = '';
+  const inclKeys = ['cafe','bar'];
+  const order = ['cafe','restaurant','bar','glutenfree'];
+  order.forEach(key=>{
+    if(menuData[key]){
+      const section = menuData[key];
+      const isIncl = inclKeys.includes(key);
+      const noteClass = isIncl ? 'price-note price-note-incl' : 'price-note price-note-excl';
+      const noteText = isIncl
+        ? 'All prices in Nu. &amp; inclusive of 5% GST and 10% Service Charge.'
+        : 'All prices in Nu. &amp; exclusive of 5% GST and 10% Service Charge.';
+      html += `<div class="category-group" data-category="${key}">`;
+      let d=0;
+      section.subCategories.forEach(sub=>{
+        html += sectionHTML(sub, key, d);
+        d += 0.1;
+      });
+      html += `<div class="${noteClass} category-note">${noteText}</div>`;
+      html += `</div>`;
+    }
+  });
+  content.innerHTML = html;
+}
 
+function applyFilter(){
+  // show/hide individual section groups
+  const groups = document.querySelectorAll('.section-group');
+  groups.forEach(g=>{
+    const cat = g.dataset.cat;
+    const sub = g.dataset.sub;
+    let show = false;
+    if(currentFilter==='all') show=true;
+    else if(currentFilter===cat){
+      show = !currentSub || currentSub===sub;
+    }
+    g.classList.toggle('hidden', !show);
+  });
+  // show/hide category-group wrappers (and their note)
+  document.querySelectorAll('.category-group').forEach(cg=>{
+    const cat = cg.dataset.category;
+    const visible = currentFilter==='all' || currentFilter===cat;
+    cg.classList.toggle('hidden', !visible);
+  });
+
+  // scroll to first visible section
+  const first = document.querySelector('.section-group:not(.hidden)');
+  if(first){
+    const header = document.querySelector('.header');
+    const nav = document.getElementById('mainNav');
+    const fixedOffset = (header ? header.offsetHeight : 80) + (nav ? nav.offsetHeight : 90) + 20;
+    const y = first.getBoundingClientRect().top + window.scrollY - fixedOffset;
+    window.scrollTo({top: Math.max(0, y), behavior:'smooth'});
+  }
+}
+
+function updateSubNav(filter){
+  const subNav = document.getElementById('subNav');
+  const inner = document.getElementById('subNavInner');
+  const subs = subCategories[filter];
+  if(subs){
+    inner.innerHTML = subs.map(s=>
+      `<button class="sub-chip${currentSub===s.id?' active':''}" onclick="setSub('${s.id}',this)">${s.label}</button>`
+    ).join('');
+    subNav.classList.add('open');
+  } else {
+    subNav.classList.remove('open');
+    inner.innerHTML='';
+  }
+}
+
+function setFilter(filter, btn){
+  currentFilter = filter;
+  currentSub = null;
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateSubNav(filter);
+  applyFilter();
+}
+
+function setSub(subId, btn){
+  if(currentSub===subId){
+    currentSub=null;
+    btn.classList.remove('active');
+  } else {
+    currentSub=subId;
+    document.querySelectorAll('.sub-chip').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  applyFilter();
+}
+
+/* ═══════════════════════════════════════════════════
+   SCROLL TO TOP
+═══════════════════════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  const btn=document.getElementById('scrollTop');
+  btn.classList.toggle('visible',window.scrollY>300);
+});
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+renderAll();
+</script>
 </body>
 </html>
